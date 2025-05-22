@@ -1,21 +1,33 @@
 function burnCPU(cores) {
   const workers = [];
+
   for (let i = 0; i < cores; i++) {
-    const worker = setInterval(() => {
-      let x = 0;
-      while (true) { x += Math.sqrt(Math.random()); } // tight loop
-    }, 0);
+    let active = true;
+
+    const worker = async () => {
+      while (active) {
+        const start = Date.now();
+        while (Date.now() - start < 100) {
+          Math.sqrt(Math.random());
+        }
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    };
+
+    worker.stop = () => { active = false; };
+    worker();
     workers.push(worker);
   }
-  return () => workers.forEach(clearInterval);
+
+  return () => workers.forEach((w) => w.stop());
 }
 
 function consumeRAM(mb) {
   const buffers = [];
   for (let i = 0; i < mb; i++) {
-    buffers.push(Buffer.alloc(1024 * 1024)); // 1MB per buffer
+    buffers.push(Buffer.alloc(1024 * 1024));
   }
-  return () => buffers.splice(0, buffers.length); // clear memory
+  return () => buffers.splice(0, buffers.length);
 }
 
 function simulateLoad({ cpu, ram, duration }) {
@@ -25,7 +37,7 @@ function simulateLoad({ cpu, ram, duration }) {
   setTimeout(() => {
     stopCPU();
     stopRAM();
-    console.log('Load spike ended.');
+    console.log(`Load spike ended after ${duration}s.`);
   }, duration * 1000);
 }
 
