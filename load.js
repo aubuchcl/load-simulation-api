@@ -25,7 +25,11 @@ function burnCPU(cores) {
 function consumeRAM(mb) {
   const buffers = [];
   for (let i = 0; i < mb; i++) {
-    buffers.push(Buffer.alloc(1024 * 1024));
+    const buf = Buffer.alloc(1024 * 1024); // 1MB
+    for (let j = 0; j < buf.length; j += 4096) {
+      buf[j] = 0xff; // touch each 4KB page
+    }
+    buffers.push(buf);
   }
   return () => buffers.splice(0, buffers.length);
 }
