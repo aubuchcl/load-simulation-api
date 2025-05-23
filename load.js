@@ -25,22 +25,30 @@ function burnCPU(cores) {
 function consumeRAM(mb) {
   const buffers = [];
   for (let i = 0; i < mb; i++) {
-    const buf = Buffer.alloc(1024 * 1024); // 1MB
+    const buf = Buffer.alloc(1024 * 1024);
     for (let j = 0; j < buf.length; j += 4096) {
-      buf[j] = 0xff; // touch each 4KB page
+      buf[j] = 0xff;
     }
     buffers.push(buf);
   }
-  return () => buffers.splice(0, buffers.length);
+  return buffers;
 }
 
 function simulateLoad({ cpu, ram, duration }) {
   const stopCPU = cpu > 0 ? burnCPU(cpu) : () => {};
-  const stopRAM = ram > 0 ? consumeRAM(ram) : () => {};
+  const buffers = ram > 0 ? consumeRAM(ram) : [];
 
   setTimeout(() => {
     stopCPU();
-    stopRAM();
+    buffers.length = 0;
+
+    if (global.gc) {
+      console.log('Forcing garbage collection...');
+      global.gc();
+    } else {
+      console.warn('GC not available — run Node with --expose-gc to enable manual memory cleanup.');
+    }
+
     console.log(`Load spike ended after ${duration}s.`);
   }, duration * 1000);
 }
