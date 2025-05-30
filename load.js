@@ -1,20 +1,25 @@
+// load.js
+
 function burnCPU(cpu) {
   const fullCores = Math.floor(cpu);
   const fractionalCore = cpu % 1;
   const workers = [];
 
-  // Full-core workers (100% utilization)
+  console.log(`[burnCPU] Starting with ${fullCores} full cores and ${fractionalCore.toFixed(2)} fractional core`);
+
   for (let i = 0; i < fullCores; i++) {
     let active = true;
 
     const worker = async () => {
+      console.log(`[burnCPU] Full core worker ${i} started.`);
       while (active) {
         const start = Date.now();
         while (Date.now() - start < 100) {
           Math.sqrt(Math.random());
         }
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        await new Promise((resolve) => setImmediate(resolve));
       }
+      console.log(`[burnCPU] Full core worker ${i} stopped.`);
     };
 
     worker.stop = () => { active = false; };
@@ -22,14 +27,13 @@ function burnCPU(cpu) {
     workers.push(worker);
   }
 
-  // Fractional core worker (e.g. 25%, 50%, 75%)
   if (fractionalCore > 0) {
     let active = true;
-
     const worker = async () => {
+      console.log(`[burnCPU] Fractional core worker started.`);
       while (active) {
-        const busyTime = fractionalCore * 10; // 10ms cycle
-        const idleTime = 10 - busyTime;
+        const busyTime = fractionalCore * 50; // longer cycle to reduce overhead
+        const idleTime = 50 - busyTime;
 
         const start = Date.now();
         while (Date.now() - start < busyTime) {
@@ -38,6 +42,7 @@ function burnCPU(cpu) {
 
         await new Promise((resolve) => setTimeout(resolve, idleTime));
       }
+      console.log(`[burnCPU] Fractional core worker stopped.`);
     };
 
     worker.stop = () => { active = false; };
@@ -49,11 +54,12 @@ function burnCPU(cpu) {
 }
 
 function consumeRAM(mb) {
+  console.log(`[consumeRAM] Allocating ${mb} MB of RAM`);
   const buffers = [];
   for (let i = 0; i < mb; i++) {
-    const buf = Buffer.alloc(1024 * 1024); // 1 MiB
+    const buf = Buffer.alloc(1024 * 1024);
     for (let j = 0; j < buf.length; j += 4096) {
-      buf[j] = 0xff; // touch every 4KB page
+      buf[j] = 0xff;
     }
     buffers.push(buf);
   }
@@ -61,21 +67,23 @@ function consumeRAM(mb) {
 }
 
 function simulateLoad({ cpu, ram, duration }) {
+  console.log(`[simulateLoad] Starting load: CPU=${cpu}, RAM=${ram}, Duration=${duration}s`);
   const stopCPU = cpu > 0 ? burnCPU(cpu) : () => {};
   const buffers = ram > 0 ? consumeRAM(ram) : [];
 
   setTimeout(() => {
+    console.log(`[simulateLoad] Stopping load`);
     stopCPU();
-    buffers.length = 0; // drop refs
+    buffers.length = 0;
 
     if (global.gc) {
-      console.log("Forcing garbage collection...");
+      console.log("[simulateLoad] Forcing garbage collection...");
       global.gc();
     } else {
-      console.warn("GC not available — run Node with --expose-gc");
+      console.warn("[simulateLoad] GC not available — run Node with --expose-gc");
     }
 
-    console.log(`Load spike ended after ${duration}s.`);
+    console.log(`[simulateLoad] Load spike ended after ${duration}s.`);
   }, duration * 1000);
 }
 
