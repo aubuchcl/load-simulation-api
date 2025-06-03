@@ -7,7 +7,7 @@ const { simulateLoad } = require('./load');
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(bodyParser.json({ limit: '3mb' }));
+app.use(bodyParser.json({ limit: '5mb' }));
 
 // Utility to enforce safe input bounds
 function safe(value, min, max) {
