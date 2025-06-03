@@ -32,6 +32,12 @@ app.post('/simulate-load', (req, res) => {
   }
 });
 
+// 🚀 Lightweight endpoint to accept large POST payloads and return immediately
+app.post('/accept-payload', (req, res) => {
+  res.status(200).json({ status: 'received' });
+});
+
+
 // Start server with timeout protections
 const server = app.listen(port, () => {
   console.log(`[API] Load API running on port ${port}`);
