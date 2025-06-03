@@ -32,10 +32,18 @@ app.post('/simulate-load', (req, res) => {
   }
 });
 
-// 🚀 Lightweight endpoint to accept large POST payloads and return immediately
-app.post('/accept-payload', (req, res) => {
-  res.status(200).json({ status: 'received' });
+const rawBody = require('raw-body');
+
+app.post('/accept-payload', async (req, res) => {
+  try {
+    await rawBody(req, { length: req.headers['content-length'], limit: '20mb' });
+    res.status(200).json({ status: 'received' });
+  } catch (err) {
+    console.error('Payload error:', err.message);
+    res.status(413).send('Payload too large or invalid');
+  }
 });
+
 
 
 // Start server with timeout protections
