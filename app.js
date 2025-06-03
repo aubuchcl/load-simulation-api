@@ -1,29 +1,11 @@
-// server.js
-
 const express = require('express');
 const bodyParser = require('body-parser');
-const rawBody = require('raw-body');
 const { simulateLoad } = require('./load');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Endpoint that accepts large raw POSTs and responds fast
-app.post('/accept-payload', async (req, res) => {
-  try {
-    await rawBody(req, {
-      length: req.headers['content-length'],
-      limit: '20mb'  // Cap at 20MB
-    });
-
-    res.json({ status: 'received' });
-  } catch (err) {
-    console.error('Payload error:', err.message);
-    res.status(400).json({ error: 'Payload error' });
-  }
-});
-
-// Apply JSON parsing middleware *after* the fast endpoint
+// Allow up to 20MB JSON payloads
 app.use(bodyParser.json({ limit: '20mb' }));
 
 // Utility to enforce safe input bounds
@@ -31,11 +13,11 @@ function safe(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
-// Simulate load endpoint
+// Main load simulation endpoint
 app.post('/simulate-load', (req, res) => {
   const cpu = safe(req.body.cpu || 1, 0, 8);
-  const ram = safe(req.body.ram || 100, 0, 8192);
-  const duration = safe(req.body.duration || 10, 1, 300);
+  const ram = safe(req.body.ram || 100, 0, 8192); // Max 8GB RAM
+  const duration = safe(req.body.duration || 10, 1, 300); // Max 5 minutes
 
   console.log(`[API] /simulate-load invoked with cpu=${cpu}, ram=${ram}, duration=${duration}`);
 
@@ -48,10 +30,21 @@ app.post('/simulate-load', (req, res) => {
   }
 });
 
-// Start the server
+// High-speed accept-payload endpoint
+app.post('/accept-payload', (req, res) => {
+  console.log('GOT 16MB');
+
+  // Consume request stream without processing
+  req.on('data', () => {});
+  req.on('end', () => {
+    res.status(200).end();
+  });
+});
+
+// Start server
 const server = app.listen(port, () => {
   console.log(`[API] Load API running on port ${port}`);
 });
 
-// Prevent hanging connections
-server.setTimeout(10000); // 10s timeout
+// Prevent hanging requests
+server.setTimeout(10000); // 10 seconds
