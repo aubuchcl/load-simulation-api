@@ -40,24 +40,25 @@ app.post('/simulate-load', (req, res) => {
   }
 });
 
+let cacheHitCount = 0;
+
 app.post('/cache', (req, res) => {
-  let hadError = false;
+  cacheHitCount++;
+  console.log(`[CACHE] Hit #${cacheHitCount}`);
+
+  req.on('data', () => {});
+  req.on('end', () => {
+    res.status(200).json({ ok: true, count: cacheHitCount });
+  });
 
   req.on('error', (err) => {
-    hadError = true;
-    console.error(`[CACHE] Request error: ${err.message}`);
+    console.error(`[CACHE] Error: ${err.message}`);
     if (!res.headersSent) {
       res.status(500).send('Request error');
     }
   });
+});
 
-  req.on('end', () => {
-    if (!hadError) {
-      const timestamp = new Date().toISOString();
-      console.log(`[CACHE] ${timestamp} - request ok`);
-      res.status(200).send('ok');
-    }
-  });
 
   // Drain the body to ensure 'end' is called
   req.on('data', () => {});
