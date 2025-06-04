@@ -5,18 +5,17 @@ const { simulateLoad } = require('./load');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// 🚀 Define fast /accept-payload route BEFORE body-parser is applied
+// 🚀 Fast /accept-payload route BEFORE body-parser is applied
 app.post('/accept-payload', (req, res) => {
   console.log('GOT 16MB');
 
-  // Consume request stream without triggering body-parser
   req.on('data', () => {});
   req.on('end', () => {
     res.status(200).end();
   });
 });
 
-// ✅ Apply body-parser only to remaining routes
+// ✅ Apply body-parser to remaining routes
 app.use(bodyParser.json({ limit: '20mb' }));
 
 // Utility to enforce safe input bounds
@@ -40,6 +39,7 @@ app.post('/simulate-load', (req, res) => {
   }
 });
 
+// ✅ Working /cache endpoint with counter
 let cacheHitCount = 0;
 
 app.post('/cache', (req, res) => {
@@ -58,13 +58,6 @@ app.post('/cache', (req, res) => {
     }
   });
 });
-
-
-  // Drain the body to ensure 'end' is called
-  req.on('data', () => {});
-});
-
-
 
 // Start server
 const server = app.listen(port, () => {
