@@ -39,25 +39,19 @@ app.post('/simulate-load', (req, res) => {
   }
 });
 
-// ✅ Working /cache endpoint with counter
-let cacheHitCount = 0;
+
+let counter = 0;
 
 app.post('/cache', (req, res) => {
-  cacheHitCount++;
-  console.log(`[CACHE] Hit #${cacheHitCount}`);
+  counter++;
+  console.log(`[CACHE] Hit #${counter}`);
 
   req.on('data', () => {});
   req.on('end', () => {
-    res.status(200).json({ ok: true, count: cacheHitCount });
-  });
-
-  req.on('error', (err) => {
-    console.error(`[CACHE] Error: ${err.message}`);
-    if (!res.headersSent) {
-      res.status(500).send('Request error');
-    }
+    res.status(200).send(`OK ${counter}`);
   });
 });
+
 
 // Start server
 const server = app.listen(port, () => {
