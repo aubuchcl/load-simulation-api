@@ -40,6 +40,26 @@ app.post('/simulate-load', (req, res) => {
   }
 });
 
+// ✅ New /cache endpoint
+app.post('/cache', (req, res) => {
+  let data = '';
+
+  req.on('error', (err) => {
+    console.error(`[ERROR] /cache request error: ${err.message}`);
+    res.status(500).send('Error receiving request');
+  });
+
+  req.on('data', chunk => {
+    data += chunk;
+  });
+
+  req.on('end', () => {
+    const timestamp = new Date().toISOString();
+    console.log(`[CACHE] ${timestamp} - request ok`);
+    res.status(200).end();
+  });
+});
+
 // Start server
 const server = app.listen(port, () => {
   console.log(`[API] Load API running on port ${port}`);
