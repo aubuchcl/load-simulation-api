@@ -42,7 +42,7 @@ app.post('/simulate-load', (req, res) => {
 
 let counter = 0;
 
-app.post('/cache', (req, res) => {
+app.post('/lite', (req, res) => {
   counter++;
   console.log(`[CACHE] Hit #${counter}`);
 
