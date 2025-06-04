@@ -40,13 +40,12 @@ app.post('/simulate-load', (req, res) => {
   }
 });
 
-// ✅ New /cache endpoint
 app.post('/cache', (req, res) => {
   let data = '';
 
   req.on('error', (err) => {
     console.error(`[ERROR] /cache request error: ${err.message}`);
-    res.status(500).send('Error receiving request');
+    res.status(500).send('Request stream error');
   });
 
   req.on('data', chunk => {
@@ -54,11 +53,17 @@ app.post('/cache', (req, res) => {
   });
 
   req.on('end', () => {
-    const timestamp = new Date().toISOString();
-    console.log(`[CACHE] ${timestamp} - request ok`);
-    res.status(200).end();
+    try {
+      const timestamp = new Date().toISOString();
+      console.log(`[CACHE] ${timestamp} - request ok`);
+      res.status(200).send('ok');
+    } catch (err) {
+      console.error(`[CACHE] Processing error: ${err.message}`);
+      res.status(500).send('Internal server error');
+    }
   });
 });
+
 
 // Start server
 const server = app.listen(port, () => {
