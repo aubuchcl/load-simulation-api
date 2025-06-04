@@ -48,7 +48,7 @@ app.post('/cache', (req, res) => {
 
   req.on('data', () => {});
   req.on('end', () => {
-    res.status(200).send(`OK ${counter}`);
+    res.status(200).end();
   });
 });
 
