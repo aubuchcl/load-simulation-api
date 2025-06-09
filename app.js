@@ -46,11 +46,14 @@ app.post('/lite', (req, res) => {
   counter++;
   console.log(`[CACHE] Hit #${counter}`);
 
+  const containerName = process.env.CONTAINER_NAME || 'unknown';
+
   req.on('data', () => {});
   req.on('end', () => {
-    res.status(200).end();
+    res.status(200).json({ container: containerName });
   });
 });
+
 
 
 // Start server
